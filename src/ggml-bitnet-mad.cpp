@@ -196,7 +196,7 @@ void ggml_vec_dot_i2_i8_s(int n, float * s, size_t bs, const void * vx, size_t b
     for (int i=0; i < group32_num; i++) {
 
 #if defined(__ARM_FEATURE_DOTPROD)
-
+        // Using dot product instructions - accumulate directly into int32x4_t
 #else
         int16x8_t accu32_0 = vdupq_n_s16(0);
         int16x8_t accu32_1 = vdupq_n_s16(0);
@@ -262,7 +262,8 @@ void ggml_vec_dot_i2_i8_s(int n, float * s, size_t bs, const void * vx, size_t b
         }
 
 #if defined(__ARM_FEATURE_DOTPROD)
-
+        // Dot product path - no additional accumulation needed, 
+        // vdotq_s32 already accumulates into accu_0, accu_1, accu_2, accu_3
 #else
         accu_0 = vaddq_s32(accu_0, vmovl_s16(vget_low_s16(accu32_0)));
         accu_0 = vaddq_s32(accu_0, vmovl_high_s16(accu32_0));
@@ -277,7 +278,7 @@ void ggml_vec_dot_i2_i8_s(int n, float * s, size_t bs, const void * vx, size_t b
 
     for (int i = 0; i < groupla_num; i++){
 #if defined(__ARM_FEATURE_DOTPROD)
-
+        // Using dot product instructions - accumulate directly into int32x4_t
 #else
         int16x8_t accula_0 = vdupq_n_s16(0);
         int16x8_t accula_1 = vdupq_n_s16(0);
@@ -341,7 +342,7 @@ void ggml_vec_dot_i2_i8_s(int n, float * s, size_t bs, const void * vx, size_t b
 #endif
         }
 #if defined(__ARM_FEATURE_DOTPROD)
-
+        // Dot product path - no additional accumulation needed
 #else
         accu_0 = vaddq_s32(accu_0, vmovl_s16(vget_low_s16(accula_0)));
         accu_0 = vaddq_s32(accu_0, vmovl_high_s16(accula_0));

@@ -33,7 +33,17 @@ if (GGML_BITNET_X86_TL2)
 endif()
 
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    add_compile_options(-fpermissive)
+    # Apply -fpermissive only to C++ files
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fpermissive>)
+    
+    # ARM64 optimizations for Raspberry Pi 4/5
+    if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+        # Enable ARM dot product instructions for 2-4x speedup
+        add_compile_options(-march=armv8.2-a+dotprod+fp16)
+        add_compile_options(-mtune=cortex-a76)  # Optimize for Pi 5, compatible with Pi 4
+        add_compile_options(-O2)  # Use O2 instead of O3 to avoid compiler internal errors
+        add_compile_options(-fno-finite-math-only)  # Required by ggml.c
+    endif()
 endif()
 
 find_package(Threads REQUIRED)
