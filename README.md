@@ -138,7 +138,6 @@ Bitnet.cpp optimized for Raspberry Pis
     - For Debian/Ubuntu users, you can download with [Automatic installation script](https://apt.llvm.org/)
 
         `bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"`
-- conda (highly recommend)
 
 ### Build from source
 
@@ -150,9 +149,9 @@ cd BitNet
 ```
 2. Install the dependencies
 ```bash
-# (Recommended) Create a new conda environment
-conda create -n bitnet-cpp python=3.9
-conda activate bitnet-cpp
+# Create a Python virtual environment
+python3 -m venv myenv
+source myenv/bin/activate
 
 pip install -r requirements.txt
 ```
