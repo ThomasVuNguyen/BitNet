@@ -38,11 +38,38 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     
     # ARM64 optimizations for Raspberry Pi 4/5
     if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
-        # Enable ARM dot product instructions for 2-4x speedup
-        add_compile_options(-march=armv8.2-a+dotprod+fp16)
-        add_compile_options(-mtune=cortex-a76)  # Optimize for Pi 5, compatible with Pi 4
+        # Detect Raspberry Pi version for optimal tuning
+        if (EXISTS "/proc/device-tree/model")
+            file(READ "/proc/device-tree/model" RPI_MODEL)
+            if (RPI_MODEL MATCHES "Raspberry Pi 5")
+                message(STATUS "Raspberry Pi 5 detected - enabling full optimizations")
+                add_compile_options(-march=armv8.2-a+dotprod+fp16)
+                add_compile_options(-mtune=cortex-a76)
+                # Memory access optimizations for Pi 5
+                add_compile_options(-fprefetch-loop-arrays)
+                add_compile_options(-falign-loops=64 -falign-functions=64)
+            elseif (RPI_MODEL MATCHES "Raspberry Pi 4")
+                message(STATUS "Raspberry Pi 4 detected - enabling compatible optimizations")
+                add_compile_options(-march=armv8-a+crc+crypto)
+                add_compile_options(-mtune=cortex-a72)
+                # Memory access optimizations for Pi 4
+                add_compile_options(-fprefetch-loop-arrays)
+                add_compile_options(-falign-loops=32 -falign-functions=32)
+                message(WARNING "Raspberry Pi 4 does not support ARM dot product instructions")
+            else()
+                message(STATUS "Generic ARM64 system - using conservative optimizations")
+                add_compile_options(-march=armv8.2-a+dotprod+fp16)
+                add_compile_options(-mtune=cortex-a76)
+            endif()
+        else()
+            # Fallback for systems without device tree
+            add_compile_options(-march=armv8.2-a+dotprod+fp16)
+            add_compile_options(-mtune=cortex-a76)
+        endif()
+        
         add_compile_options(-O2)  # Use O2 instead of O3 to avoid compiler internal errors
         add_compile_options(-fno-finite-math-only)  # Required by ggml.c
+        add_compile_options(-funroll-loops)  # Enable loop unrolling for better performance
     endif()
 endif()
 
