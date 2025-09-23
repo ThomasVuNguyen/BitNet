@@ -1,0 +1,85 @@
+# BitNet Commands Guide
+
+## Installation Commands
+
+# Clone the repo
+git clone --recursive https://github.com/ThomasVuNguyen/BitNet.git
+cd BitNet
+
+# Create a Python virtual environment
+python3 -m venv myenv
+source myenv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Build BitNet with CMake (ARM optimizations automatically enabled on Raspberry Pi)
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+cd ..
+
+# Manually download the model and run with local path
+
+huggingface-cli download microsoft/BitNet-b1.58-2B-4T-gguf --local-dir models/BitNet-b1.58-2B-4T
+python setup_env.py -md models/BitNet-b1.58-2B-4T -q i2_s
+
+# Note: Model options:
+microsoft/bitnet-b1.58-2B-4T-gguf
+mradermacher/bitnet_b1_58-large-i1-GGUF
+mradermacher/bitnet_b1_58-3B-i1-GGUF
+tiiuae/Falcon-E-1B-Instruct-GGUF
+tiiuae/Falcon-E-3B-Instruct-GGUF
+
+## Basic Usage Commands
+
+# Run inference with the quantized model
+python run_inference.py -m models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf -p "You are a helpful assistant" -cnv
+
+## Performance Benchmarking Commands
+
+# Basic benchmark - test prompt processing and text generation
+./build/bin/llama-bench -m models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf
+
+# Detailed benchmark with specific parameters
+./build/bin/llama-bench -m models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf -p 512 -n 128 -t 4
+
+# Test different thread counts for optimization
+./build/bin/llama-bench -m models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf -p 512 -n 128 -t 1,2,4
+
+# Multiple runs for accuracy with verbose output
+./build/bin/llama-bench -m models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf -p 512 -n 128 -t 4 -r 10 -v
+
+# Export results to CSV for analysis
+./build/bin/llama-bench -m models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf -p 512 -n 128 -t 1,2,4 -o csv > benchmark_results.csv
+
+## E2E Benchmark Commands
+
+# Run benchmark with specific model
+python utils/e2e_benchmark.py -m /path/to/model -n 200 -p 256 -t 4
+
+# Generate dummy model for testing
+python utils/generate-dummy-bitnet-model.py models/bitnet_b1_58-large --outfile models/dummy-bitnet-125m.tl1.gguf --outtype tl1 --model-size 125M
+
+# Run benchmark with the generated model
+python utils/e2e_benchmark.py -m models/dummy-bitnet-125m.tl1.gguf -p 512 -n 128
+
+## Model Conversion Commands
+
+# Prepare the .safetensors model file
+huggingface-cli download microsoft/bitnet-b1.58-2B-4T-bf16 --local-dir ./models/bitnet-b1.58-2B-4T-bf16
+
+# Convert to gguf model
+python ./utils/convert-helper-bitnet.py ./models/bitnet-b1.58-2B-4T-bf16
+
+## Troubleshooting Commands
+
+# Check clang installation
+clang -v
+
+# Initialize Visual Studio tools (Command Prompt)
+"C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\Tools\VsDevCmd.bat" -startdir=none -arch=x64 -host_arch=x64
+
+# Initialize Visual Studio tools (PowerShell)
+Import-Module "C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\Tools\Microsoft.VisualStudio.DevShell.dll" Enter-VsDevShell 3f0e31ad -SkipAutomaticLocation -DevCmdArguments "-arch=x64 -host_arch=x64"
